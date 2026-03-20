@@ -1003,10 +1003,11 @@ function predictManual() {
             resultDiv.style.display = "none";
             loadingDiv.style.display = "block";
 
-            fetch("/predict", {
-                method: "POST",
-                body: formData
-            })
+            fetch("/upload", {
+    method: "POST",
+    body: formData,
+    credentials: "include"
+})
             .then(res => {
                 if (res.status === 401) { window.location = "/login"; return Promise.reject(); }
                 if (!res.ok) throw new Error(`Server returned ${res.status}`);
