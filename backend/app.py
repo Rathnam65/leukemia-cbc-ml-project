@@ -250,12 +250,12 @@ def get_prediction(wbc, rbc, hb, platelets):
 
 
 def recommendation(prob):
-    if prob<0.30:
-        return "Low Risk – CBC values appear normal."
-    elif prob<0.60:
-        return "Medium Risk – Monitor and repeat CBC."
+    if prob < 0.30:
+        return "Low Risk"
+    elif prob < 0.60:
+        return "Medium Risk"
     else:
-        return "High Risk – Possible leukemia pattern detected."
+        return "High Risk"
 
 
 # ---------------- ROUTES ----------------
@@ -280,9 +280,14 @@ def predict():
     risk = recommendation(prob)
 
     return jsonify({
-        "probability": round(prob, 3),
-        "risk": risk
-    })
+    "probability": round(prob, 3),
+    "risk": risk,
+    "recommendation": (
+        "Values appear within normal range." if risk == "Low Risk"
+        else "Monitor patient and repeat CBC." if risk == "Medium Risk"
+        else "High-risk indicators detected. Immediate evaluation recommended."
+    )
+})
 
 # ---------------- START ----------------
 if __name__=="__main__":
