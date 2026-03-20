@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hospital Login</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f7fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background: white;
+    padding: 40px;
+    width: 360px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
+
+label {
+    font-size: 14px;
+    color: #555;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+input:focus {
+    border-color: #2d9cdb;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2d9cdb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #238ac9;
+}
+
+.message {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.link {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.link a {
+    color: #2d9cdb;
+    text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Hospital Login</h2>
+
+    <form onsubmit="login(event)">
+
+        <label>Username</label>
+        <input type="text" id="username">
+
+        <label>Password</label>
+        <input type="password" id="password">
+
+
+        <button id="loginBtn" type="submit">Login</button>
+    </form>
+
+    <div class="message" id="message"></div>
+
+    <div class="link">
+        Don't have an account? <a href="/signup">Sign Up</a>
+    </div>
+</div>
+
+<script>
+async function login(event) {
+    event.preventDefault(); // ✅ prevents page reload
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    const msg = document.getElementById("message");
+    const btn = document.getElementById("loginBtn");
+
+    msg.innerHTML = "";
+
+    // ✅ Validation
+    if (!username || !password) {
+        msg.style.color = "red";
+        msg.innerHTML = "All fields are required";
+        return;
+    }
+
+
+    try {
+        const res = await fetch("/login", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            throw new Error("Invalid server response");
+        }
+
+        if (res.ok) {
+            msg.style.color = "green";
+            msg.innerHTML = "Login successful! Redirecting...";
+            setTimeout(() => window.location.href = "/", 1500);
+        } else {
+            msg.style.color = "red";
+            msg.innerHTML = data.error || "Login failed";
+        }
+
+    } catch (error) {
+        msg.style.color = "red";
+        msg.innerHTML = "Server error. Please try again.";
+    }
+
+    btn.disabled = false;
+    btn.innerText = "Login";
+}
+</script>
+
+</body>
+</html>
