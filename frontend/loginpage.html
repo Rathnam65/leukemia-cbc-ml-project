@@ -1,101 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hospital Login</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<meta charset="UTF-8">
+<title>Hospital Login</title>
 
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 350px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        }
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f7fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+.container {
+    background: white;
+    padding: 40px;
+    width: 360px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
 
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #667eea;
-            border: none;
-            color: white;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+label {
+    font-size: 14px;
+    color: #555;
+}
 
-        button:hover {
-            background: #5a67d8;
-        }
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
 
-        .message {
-            text-align: center;
-            margin-top: 10px;
-            color: red;
-        }
+input:focus {
+    border-color: #2d9cdb;
+}
 
-        .link {
-            text-align: center;
-            margin-top: 10px;
-        }
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2d9cdb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
 
-        .link a {
-            text-decoration: none;
-            color: #667eea;
-        }
-    </style>
+button:hover {
+    background: #238ac9;
+}
+
+.message {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.link {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.link a {
+    color: #2d9cdb;
+    text-decoration: none;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
     <h2>Hospital Login</h2>
 
-    <input type="text" id="username" placeholder="Username" required>
-    <input type="password" id="password" placeholder="Password" required>
+    <label>Username</label>
+    <input type="text" id="username">
 
-    <button onclick="login()">Login</button>
+    <label>Password</label>
+    <input type="password" id="password">
+
+    <button onclick="login()">Sign In</button>
 
     <div class="message" id="message"></div>
 
     <div class="link">
-        New hospital? <a href="/signup">Sign Up</a>
+        New hospital? <a href="/signup">Create Account</a>
     </div>
 </div>
 
 <script>
 function login() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-
     fetch("/login", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            username: username,
-            password: password
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
         })
     })
     .then(res => res.json())
@@ -104,20 +116,12 @@ function login() {
 
         if (data.success) {
             msg.style.color = "green";
-            msg.innerHTML = "Login successful! Redirecting...";
-
-            // redirect to homepage
-            setTimeout(() => {
-                window.location.href = "/";
-            }, 1000);
-
+            msg.innerHTML = "Login successful!";
+            setTimeout(() => window.location.href = "/", 1000);
         } else {
             msg.style.color = "red";
-            msg.innerHTML = data.error || "Login failed";
+            msg.innerHTML = data.error;
         }
-    })
-    .catch(() => {
-        document.getElementById("message").innerHTML = "Server error";
     });
 }
 </script>

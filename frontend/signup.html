@@ -1,107 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hospital Signup</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<meta charset="UTF-8">
+<title>Hospital Registration</title>
 
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 350px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        }
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f7fb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+/* Card */
+.container {
+    background: #ffffff;
+    padding: 40px;
+    width: 380px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+/* Header */
+h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
 
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #4facfe;
-            border: none;
-            color: white;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+/* Labels */
+label {
+    font-size: 14px;
+    color: #555;
+    margin-top: 10px;
+    display: block;
+}
 
-        button:hover {
-            background: #007bff;
-        }
+/* Inputs */
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+}
 
-        .link {
-            text-align: center;
-            margin-top: 10px;
-        }
+input:focus {
+    border-color: #2d9cdb;
+}
 
-        .link a {
-            text-decoration: none;
-            color: #007bff;
-        }
+/* Button */
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: #2d9cdb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
 
-        .message {
-            text-align: center;
-            margin-top: 10px;
-            color: green;
-        }
+button:hover {
+    background: #238ac9;
+}
 
-        .error {
-            color: red;
-        }
-    </style>
+/* Message */
+.message {
+    text-align: center;
+    margin-top: 15px;
+}
+
+/* Link */
+.link {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.link a {
+    color: #2d9cdb;
+    text-decoration: none;
+    font-weight: 500;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <h2>Hospital Signup</h2>
+    <h2>Hospital Registration</h2>
 
-    <input type="text" id="hospital" placeholder="Hospital Name" required>
-    <input type="text" id="username" placeholder="Username" required>
-    <input type="password" id="password" placeholder="Password" required>
+    <label>Hospital Name</label>
+    <input type="text" id="hospital">
 
-    <button onclick="signup()">Sign Up</button>
+    <label>Username</label>
+    <input type="text" id="username">
+
+    <label>Password</label>
+    <input type="password" id="password">
+
+    <label>Confirm Password</label>
+    <input type="password" id="confirm">
+
+    <button onclick="signup()">Create Account</button>
 
     <div class="message" id="message"></div>
 
     <div class="link">
-        Already have an account? <a href="/login">Login</a>
+        Already registered? <a href="/login">Sign In</a>
     </div>
 </div>
 
 <script>
 function signup() {
-    const hospital = document.getElementById("hospital").value;
-    const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
+    const confirm = document.getElementById("confirm").value;
+
+    if (password !== confirm) {
+        alert("Passwords do not match");
+        return;
+    }
 
     fetch("/signup", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            hospital_name: hospital,
-            username: username,
+            hospital_name: document.getElementById("hospital").value,
+            username: document.getElementById("username").value,
             password: password
         })
     })
@@ -110,17 +142,12 @@ function signup() {
         const msg = document.getElementById("message");
 
         if (data.message) {
+            msg.style.color = "green";
             msg.innerHTML = data.message;
-            msg.classList.remove("error");
-
-            // redirect to login after success
-            setTimeout(() => {
-                window.location.href = "/login";
-            }, 1500);
-
+            setTimeout(() => window.location.href = "/login", 1500);
         } else {
+            msg.style.color = "red";
             msg.innerHTML = data.error;
-            msg.classList.add("error");
         }
     });
 }
