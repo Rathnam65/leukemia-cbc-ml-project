@@ -1124,9 +1124,17 @@
         document.getElementById("autoRefreshToggle").addEventListener("click", toggleAutoRefresh);
 
         function logout() {
-            fetch("/logout", { method: "POST" })
-                .finally(() => window.location = "/login");
-        }
+    fetch("/logout", {
+        method: "POST",
+        credentials: "include"   // 🔥 IMPORTANT
+    })
+    .then(() => {
+        window.location.href = "/login";
+    })
+    .catch(() => {
+        window.location.href = "/login";
+    });
+}
 
         document.getElementById("logoutButton").addEventListener("click", logout);
         loadUser();
