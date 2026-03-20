@@ -856,9 +856,14 @@
                     resultDiv.className = "error";
                     resultDiv.innerText = "Error: " + data.error;
                 } else {
-                    resultDiv.className = "";
-                    resultDiv.innerHTML = createResultHTML(data.results[0]);
-                }
+    resultDiv.className = "";
+
+    resultDiv.innerHTML = createResultHTML({
+        probability: data.probability,
+        risk: data.risk,
+        recommendation: data.risk
+    });
+}
             })
             .catch(err => {
                 loadingDiv.style.display = "none";
