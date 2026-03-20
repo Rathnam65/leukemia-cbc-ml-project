@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Hospital Login | Leukemia Screening</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f3f6fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #4b5563;
+            --primary: #2563eb;
+            --primary-2: #1d4ed8;
+            --border: rgba(148, 163, 184, 0.35);
+            --shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+            --radius: 14px;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top, rgba(37, 99, 235, 0.14), transparent 55%),
+                        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.11), transparent 50%),
+                        linear-gradient(175deg, #f4f8fd 0%, #eef2fb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--panel);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 40px 36px;
+            box-sizing: border-box;
+            border: 1px solid var(--border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .brand img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .brand h1 {
+            font-size: 22px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            margin: 0 0 28px 0;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            margin-bottom: 18px;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+            font-family: inherit;
+            background: rgba(255,255,255,0.9);
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: rgba(37, 99, 235, 0.6);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.1s ease, background-color 0.2s ease;
+            font-family: inherit;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
+        }
+
+        button:hover {
+            background-color: var(--primary-2);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .message {
+            margin-top: 22px;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.info {
+            background: rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            color: #1e3a8a;
+        }
+
+        .message.error {
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.25);
+            color: #991b1b;
+        }
+
+        .message code {
+            background: rgba(0,0,0,0.04);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: 26px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            opacity: 0.75;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, rgba(37,99,235,0.9), rgba(59,130,246,0.7)); display: grid; place-items: center; box-shadow: 0 12px 22px rgba(37, 99, 235, 0.18);">
+                <span style="font-size: 20px; color: white; font-weight: 700; line-height: 1;">🩺</span>
+            </div>
+            <h1>Leukemia CBC Risk</h1>
+        </div>
+
+        <p class="subtitle">Secure access to the hematology screening dashboard. Sign in to view patient assessments and risk history.</p>
+
+        <div id="message" class="message info">Please sign in to access patient data.</div>
+        <div class="message info" style="margin-top: 12px;">
+            <strong>Hint:</strong> default credentials are <code>admin</code> / <code>password</code> (override with AUTH_USERNAME/AUTH_PASSWORD env vars).
+        </div>
+
+        <label for="username">Username</label>
+        <input id="username" type="text" autocomplete="username" placeholder="Enter your username" />
+
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" placeholder="Enter your password" />
+
+        <button onclick="submitLogin()">Sign in</button>
+
+        <div id="error" class="message error" style="display:none"></div>
+
+        <div class="footer">Developed for clinical screening — <a href="#">Learn more</a></div>
+    </div>
+
+    <script>
+        function submitLogin() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const errorDiv = document.getElementById("error");
+
+            if (!username || !password) {
+                errorDiv.style.display = "block";
+                errorDiv.innerText = "Please enter both username and password.";
+                return;
+            }
+
+            errorDiv.style.display = "none";
+
+            fetch("/login", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw res;
+                }
+                return res.json();
+            })
+            .then(() => {
+                window.location.href = "/";
+            })
+            .catch(async (err) => {
+                let message = "Login failed. Please try again.";
+                if (err.json) {
+                    try {
+                        const body = await err.json();
+                        if (body && body.error) {
+                            message = body.error;
+                        }
+                    } catch {
+                        // ignore
+                    }
+                }
+                errorDiv.style.display = "block";
+                errorDiv.innerText = message;
+            });
+        }
+
+        // Allow pressing Enter to submit
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                submitLogin();
+            }
+        });
+    </script>
+</body>
+</html>
