@@ -48,20 +48,21 @@ def init_db():
     try:
         # EXISTING TABLE
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS predictions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TEXT NOT NULL,
-                source TEXT NOT NULL,
-                file_name TEXT,
-                record_id INTEGER,
-                wbc REAL,
-                rbc REAL,
-                hb REAL,
-                platelets REAL,
-                probability REAL,
-                risk TEXT
-            )
-        """)
+CREATE TABLE IF NOT EXISTS predictions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hospital TEXT,
+    timestamp TEXT,
+    source TEXT,
+    file_name TEXT,
+    record_id TEXT,
+    wbc REAL,
+    rbc REAL,
+    hb REAL,
+    platelets REAL,
+    probability REAL,
+    risk TEXT
+)
+""")
 
         # ✅ NEW USERS TABLE
         conn.execute("""
@@ -183,6 +184,20 @@ def whoami():
         "hospital": session.get("hospital")
     })
 
+@app.route("/history")
+@login_required
+def history():
+    db = get_db()
+    hospital = session.get("hospital")
+
+    rows = db.execute("""
+        SELECT * FROM predictions
+        WHERE hospital=?
+        ORDER BY timestamp DESC
+        LIMIT 100
+    """, (hospital,)).fetchall()
+
+    return jsonify([dict(r) for r in rows])
 
 @app.teardown_appcontext
 def teardown_db(exception):
