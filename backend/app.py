@@ -266,29 +266,60 @@ def home():
     return send_from_directory(frontend_dir,"index.html")
 
 
-@app.route("/predict", methods=["POST"])
+@app.route("/upload", methods=["POST"])
 @login_required
-def predict():
-    data = request.get_json()
+def upload():
+    files = request.files.getlist("files")
 
-    w = float(data.get("WBC"))
-    r = float(data.get("RBC"))
-    h = float(data.get("Hb") or data.get("Hemoglobin"))
-    p = float(data.get("Platelets"))
+    if not files:
+        return jsonify({"error": "No files uploaded"}), 400
 
-    prob = get_prediction(w, r, h, p)
-    risk = recommendation(prob)
+    results = []
+
+    for file in files:
+        filename = file.filename.lower()
+
+        if filename.endswith(".csv"):
+            df = pd.read_csv(file)
+
+        elif filename.endswith(".pdf"):
+            text = ""
+            with pdfplumber.open(file) as pdf:
+                for page in pdf.pages:
+                    t = page.extract_text()
+                    if t:
+                        text += t + "\n"
+
+            wbc, rbc, hb, platelets = extract_cbc_from_text(text)
+
+            df = pd.DataFrame([{
+                "WBC": wbc,
+                "RBC": rbc,
+                "Hb": hb,
+                "Platelets": platelets
+            }])
+
+        else:
+            continue
+
+        for _, row in df.iterrows():
+            prob = get_prediction(row["WBC"], row["RBC"], row["Hb"], row["Platelets"])
+            risk = recommendation(prob)
+
+            results.append({
+                "probability": prob,
+                "risk": risk,
+                "recommendation": (
+                    "Values appear within normal range." if risk == "Low Risk"
+                    else "Monitor patient and repeat CBC." if risk == "Medium Risk"
+                    else "High-risk indicators detected. Immediate evaluation recommended."
+                )
+            })
 
     return jsonify({
-    "probability": round(prob, 3),
-    "risk": risk,
-    "recommendation": (
-        "Values appear within normal range." if risk == "Low Risk"
-        else "Monitor patient and repeat CBC." if risk == "Medium Risk"
-        else "High-risk indicators detected. Immediate evaluation recommended."
-    )
-})
-
+        "total_records_processed": len(results),
+        "results": results
+    })
 # ---------------- START ----------------
 if __name__=="__main__":
     host = os.environ.get("HOST", "0.0.0.0")
