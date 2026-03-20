@@ -1128,12 +1128,16 @@ function predictManual() {
             historyResult.style.display = "none";
             historyLoading.style.display = "block";
 
-            fetch("/history")
-                .then(res => {
-                    if (res.status === 401) { window.location = "/login"; return Promise.reject(); }
-                    if (!res.ok) throw new Error(`Server returned ${res.status}`);
-                    return res.json();
-                })
+            fetch("/history", {
+    credentials: "include"
+})
+.then(res => {
+    if (res.status === 401) {
+        window.location = "/login";
+        return Promise.reject();
+    }
+    return res.json();
+})
                 .then(data => {
                     historyLoading.style.display = "none";
                     historyResult.style.display = "block";

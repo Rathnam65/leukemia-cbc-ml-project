@@ -10,7 +10,10 @@ import bcrypt   # ✅ ADDED
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
-
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True
+)
 # Default admin login (kept)
 AUTH_USERNAME = os.environ.get("AUTH_USERNAME", "admin")
 AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "password")
@@ -89,8 +92,6 @@ def login_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
         if not session.get("logged_in"):
-            if request.accept_mimetypes.accept_html:
-                return redirect(url_for("login"))
             return jsonify({"error": "Authentication required"}), 401
         return view(*args, **kwargs)
 
