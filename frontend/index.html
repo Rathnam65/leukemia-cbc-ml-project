@@ -895,63 +895,6 @@
             `;
         }
 
-        function predictManual() {
-            const wbc = document.getElementById("wbc").value;
-            const rbc = document.getElementById("rbc").value;
-            const hb = document.getElementById("hb").value;
-            const plt = document.getElementById("plt").value;
-            const resultDiv = document.getElementById("result");
-            const loadingDiv = document.getElementById("loading");
-
-            if (!wbc || !rbc || !hb || !plt) {
-                resultDiv.className = "error";
-                resultDiv.innerText = "Please fill in all cell count parameters before analyzing.";
-                resultDiv.style.display = "block";
-                return;
-            }
-
-            resultDiv.style.display = "none";
-            loadingDiv.style.display = "block";
-
-            fetch("/predict", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    WBC: parseFloat(wbc),
-                    RBC: parseFloat(rbc),
-                    Hb: parseFloat(hb),
-                    Platelets: parseFloat(plt)
-                })
-            })
-            .then(res => {
-                if (res.status === 401) { window.location = "/login"; return Promise.reject(); }
-                if (!res.ok) throw new Error(`Server returned ${res.status}`);
-                return res.json();
-            })
-            .then(data => {
-                loadingDiv.style.display = "none";
-                resultDiv.style.display = "block";
-
-                if (data.error) {
-                    resultDiv.className = "error";
-                    resultDiv.innerText = "Error: " + data.error;
-                } else {
-    resultDiv.className = "";
-
-    resultDiv.innerHTML = createResultHTML({
-        probability: data.probability,
-        risk: data.risk,
-        recommendation: data.risk
-    });
-}
-            })
-            .catch(err => {
-                loadingDiv.style.display = "none";
-                resultDiv.style.display = "block";
-                resultDiv.className = "error";
-                resultDiv.innerText = `Connection Error: ${err.message}`;
-            });
-        }
 function predictManual() {
     const wbc = document.getElementById("wbc").value;
     const rbc = document.getElementById("rbc").value;
@@ -1027,11 +970,9 @@ function predictManual() {
                 </div>
 
                 <div style="margin-top:12px; font-size:14px;">
-                    <strong>Clinical Insight:</strong><br>
-                    ${risk === "Low Risk" ? "Values appear within normal range." :
-                      risk === "Medium Risk" ? "Monitor patient and repeat CBC." :
-                      "High-risk indicators detected. Immediate evaluation recommended."}
-                </div>
+    <strong>Clinical Insight:</strong><br>
+    ${data.recommendation}
+</div>
             </div>
         `;
     })
