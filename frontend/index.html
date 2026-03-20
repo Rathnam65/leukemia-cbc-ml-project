@@ -947,7 +947,96 @@
                 resultDiv.innerText = `Connection Error: ${err.message}`;
             });
         }
+function predictManual() {
+    const wbc = document.getElementById("wbc").value;
+    const rbc = document.getElementById("rbc").value;
+    const hb = document.getElementById("hb").value;
+    const plt = document.getElementById("plt").value;
 
+    const resultDiv = document.getElementById("result");
+    const loadingDiv = document.getElementById("loading");
+
+    if (!wbc || !rbc || !hb || !plt) {
+        resultDiv.className = "error";
+        resultDiv.innerText = "Please fill all parameters.";
+        resultDiv.style.display = "block";
+        return;
+    }
+
+    resultDiv.style.display = "none";
+    loadingDiv.style.display = "block";
+
+    fetch("/predict", {
+        method: "POST",
+        credentials: "include",   // ✅ important
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            WBC: parseFloat(wbc),
+            RBC: parseFloat(rbc),
+            Hb: parseFloat(hb),
+            Platelets: parseFloat(plt)
+        })
+    })
+    .then(res => {
+        if (res.status === 401) {
+            window.location = "/login";
+            return Promise.reject();
+        }
+        return res.json();
+    })
+    .then(data => {
+        loadingDiv.style.display = "none";
+        resultDiv.style.display = "block";
+
+        if (data.error) {
+            resultDiv.className = "error";
+            resultDiv.innerText = data.error;
+            return;
+        }
+
+        // 🎯 NEW RESULT UI
+        const prob = (data.probability * 100).toFixed(1);
+        const risk = data.risk;
+
+        let riskClass = "low-risk";
+        if (risk.toLowerCase().includes("medium")) riskClass = "medium-risk";
+        if (risk.toLowerCase().includes("high")) riskClass = "high-risk";
+
+        resultDiv.className = "";
+        resultDiv.innerHTML = `
+            <div class="result-item ${riskClass}">
+                <div class="result-header">
+                    <strong>Prediction Result</strong>
+                    <span class="risk-badge">${risk}</span>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <div style="display:flex; justify-content:space-between; font-weight:500;">
+                        <span>Risk Probability</span>
+                        <span>${prob}%</span>
+                    </div>
+
+                    <div class="prob-bar-container">
+                        <div class="prob-bar" style="width:${prob}%"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top:12px; font-size:14px;">
+                    <strong>Clinical Insight:</strong><br>
+                    ${risk === "Low Risk" ? "Values appear within normal range." :
+                      risk === "Medium Risk" ? "Monitor patient and repeat CBC." :
+                      "High-risk indicators detected. Immediate evaluation recommended."}
+                </div>
+            </div>
+        `;
+    })
+    .catch(() => {
+        loadingDiv.style.display = "none";
+        resultDiv.style.display = "block";
+        resultDiv.className = "error";
+        resultDiv.innerText = "Connection error. Please try again.";
+    });
+}
         function predictFile() {
             const fileInput = document.getElementById("fileInput");
             const resultDiv = document.getElementById("fileResult");
