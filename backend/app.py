@@ -250,24 +250,23 @@ def home():
     return send_from_directory(frontend_dir,"index.html")
 
 
-@app.route("/predict",methods=["POST"])
+@app.route("/predict", methods=["POST"])
 @login_required
 def predict():
-    data=request.get_json()
+    data = request.get_json()
 
-    w=float(data.get("WBC"))
-    r=float(data.get("RBC"))
-    h=float(data.get("Hb") or data.get("Hemoglobin"))
-    p=float(data.get("Platelets"))
+    w = float(data.get("WBC"))
+    r = float(data.get("RBC"))
+    h = float(data.get("Hb") or data.get("Hemoglobin"))
+    p = float(data.get("Platelets"))
 
-    prob=get_prediction(w, r, h, p)
-    risk=recommendation(prob)
+    prob = get_prediction(w, r, h, p)
+    risk = recommendation(prob)
 
     return jsonify({
         "probability": round(prob, 3),
         "risk": risk
     })
-
 
 # ---------------- START ----------------
 if __name__=="__main__":
