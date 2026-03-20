@@ -1049,7 +1049,9 @@ function predictManual() {
 
         function loadUser() {
             const userInfo = document.getElementById("userInfo");
-            fetch("/whoami")
+            fetch("/whoami", {
+    credentials: "include"
+})
                 .then(res => {
                     if (res.status === 401) { window.location = "/login"; return Promise.reject(); }
                     return res.json();
@@ -1231,7 +1233,10 @@ function predictManual() {
         document.getElementById("autoRefreshToggle").addEventListener("click", toggleAutoRefresh);
 
         function logout() {
-            fetch("/logout", { method: "POST" })
+            fetch("/logout", {
+    method: "POST",
+    credentials: "include"
+})
                 .finally(() => window.location = "/login");
         }
 

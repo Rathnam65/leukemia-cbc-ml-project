@@ -939,7 +939,9 @@
 
         function loadUser() {
             const userInfo = document.getElementById("userInfo");
-            fetch("/whoami")
+            fetch("/whoami", {
+    credentials: "include"
+})
                 .then(res => {
                     if (res.status === 401) { window.location = "/login"; return Promise.reject(); }
                     return res.json();
