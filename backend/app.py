@@ -222,16 +222,20 @@ def record_prediction(source, file_name, record_id, wbc, rbc, hb, platelets, pro
 
 
 def extract_cbc_from_text(text):
-    def find(pattern):
-        m=re.search(pattern,text)
-        return float(m.group(1)) if m else 0.0
+    def find(pattern, group_index=1):
+        m = re.search(pattern, text)
+        if m:
+            value = m.group(group_index)
+            value = value.replace(",", "")  # ✅ remove commas
+            return float(value)
+        return 0.0
 
-    return [
-        find(r"WBC.*?([\d.]+)"),
-        find(r"RBC.*?([\d.]+)"),
-        find(r"Hemoglobin.*?([\d.]+)"),
-        find(r"Platelet.*?([\d.]+)")
-    ]
+    wbc = find(r"WBC.*?([\d,]+)")
+    rbc = find(r"RBC.*?([\d.]+)")
+    hb = find(r"(Hemoglobin|Hb).*?([\d.]+)", 2)
+    platelets = find(r"Platelet.*?([\d,]+)")
+
+    return [wbc, rbc, hb, platelets]
 
 
 def extract_cbc_from_pdf(path):
