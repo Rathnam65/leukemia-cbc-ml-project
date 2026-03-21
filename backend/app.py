@@ -305,6 +305,25 @@ def clinical_risk_profile(wbc, rbc, hb, platelets):
     }
 
 
+def has_severe_high_risk_evidence(wbc, rbc, hb, platelets):
+    severe_markers = 0
+
+    if wbc >= 50000:
+        severe_markers += 1
+    if hb <= 8:
+        severe_markers += 1
+    if rbc <= 3:
+        severe_markers += 1
+    if platelets <= 50000:
+        severe_markers += 1
+
+    # A very high WBC plus another meaningful abnormality is enough to allow HIGH risk.
+    if wbc >= 30000 and (hb < 10 or rbc < 3.5 or platelets < 100000):
+        return True
+
+    return severe_markers >= 2
+
+
 def get_prediction(wbc, rbc, hb, platelets):
     if model is None:
         raise RuntimeError("Model not loaded")
@@ -354,6 +373,21 @@ def build_prediction_response(wbc, rbc, hb, platelets):
                 )
         except Exception:
             pass
+
+    if risk == "HIGH RISK" and not has_severe_high_risk_evidence(wbc, rbc, hb, platelets):
+        risk = "MEDIUM RISK"
+        probability = max(
+            class_probabilities.get("MEDIUM RISK", 0.0),
+            heuristic["class_probabilities"].get("MEDIUM RISK", 0.0),
+            0.60,
+        )
+        class_probabilities["HIGH RISK"] = min(class_probabilities.get("HIGH RISK", 0.0), 0.49)
+        class_probabilities["MEDIUM RISK"] = max(class_probabilities.get("MEDIUM RISK", 0.0), probability)
+
+    if risk == "LOW RISK" and heuristic["risk"] == "MEDIUM RISK":
+        risk = "MEDIUM RISK"
+        probability = max(probability, heuristic["probability"], 0.55)
+        class_probabilities["MEDIUM RISK"] = max(class_probabilities.get("MEDIUM RISK", 0.0), probability)
 
     return {
         "probability": round(probability, 3),

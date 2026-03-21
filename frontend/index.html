@@ -951,23 +951,20 @@ function predictManual() {
 
         // 🎯 NEW RESULT UI
         const prob = (data.probability * 100).toFixed(1);
-        const risk = data.risk;
+        const risk = (data.risk || "LOW RISK").toUpperCase();
 
-        const score = parseFloat((data.probability * 100).toFixed(1));
+        let riskLevel = "low";
+        if (risk.includes("HIGH")) riskLevel = "high";
+        else if (risk.includes("MEDIUM")) riskLevel = "medium";
 
-let riskLevel = "low";
-
-if (score >= 60) riskLevel = "high";
-else if (score >= 30) riskLevel = "medium";
-
-let riskClass = `${riskLevel}-risk`;
+        let riskClass = `${riskLevel}-risk`;
 
         resultDiv.className = "";
         resultDiv.innerHTML = `
             <div class="result-item ${riskClass}">
                 <div class="result-header">
                     <strong>Prediction Result</strong>
-                    <span class="risk-badge">${riskLevel.toUpperCase()} RISK</span>
+                    <span class="risk-badge">${risk}</span>
                 </div>
 
                 <div style="margin-top:10px;">
