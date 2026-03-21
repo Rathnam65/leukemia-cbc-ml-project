@@ -919,11 +919,11 @@ function predictManual() {
         credentials: "include",   // ✅ important
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            WBC: parseFloat(wbc),
-            RBC: parseFloat(rbc),
-            Hb: parseFloat(hb),
-            Platelets: parseFloat(plt)
-        })
+    wbc: parseFloat(wbc),
+    rbc: parseFloat(rbc),
+    hb: parseFloat(hb),
+    platelets: parseFloat(plt)
+})
     })
     .then(res => {
         if (res.status === 401) {
