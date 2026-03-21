@@ -324,27 +324,28 @@ def predict_manual():
         return jsonify({"error": validation_error}), 400
 
     # 🛡️ SAFETY OVERRIDE (VERY IMPORTANT)
-    def is_normal(wbc, rbc, hb, platelets):
-        return (
-            4000 <= wbc <= 11000 and
-            4.0 <= rbc <= 6.0 and
-            12 <= hb <= 17 and
-            150000 <= platelets <= 450000
-        )
+    # 🛡️ DIRECT SAFETY CHECK (NO FUNCTION)
+if (4000 <= wbc <= 11000 and
+    4.0 <= rbc <= 6.0 and
+    12 <= hb <= 17 and
+    150000 <= platelets <= 450000):
 
-    if is_normal(wbc, rbc, hb, platelets):
-        risk = "Low Risk"
-        prob = 0.99
-    else:
-        pred, prob = get_prediction(wbc, rbc, hb, platelets)
+    print("✅ NORMAL VALUES DETECTED")
+    risk = "LOW RISK"
+    prob = 0.99
 
-        risk_map = {
-    0: "LOW RISK",
-    1: "MEDIUM RISK",
-    2: "HIGH RISK"
-}
+else:
+    print("⚠️ USING ML MODEL")
 
-        risk = risk_map[pred]
+    pred, prob = get_prediction(wbc, rbc, hb, platelets)
+
+    risk_map = {
+        0: "LOW RISK",
+        1: "MEDIUM RISK",
+        2: "HIGH RISK"
+    }
+
+    risk = risk_map[pred]
 
     # ✅ save to DB
     record_prediction(
