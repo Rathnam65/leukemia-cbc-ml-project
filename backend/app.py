@@ -268,7 +268,7 @@ def get_prediction(wbc, rbc, hb, platelets):
     pred = model.predict(df)[0]
     probs = model.predict_proba(df)[0]
 
-    return pred, max(probs)
+    return pred, probs[pred]
 
 # ---------------- ROUTES ----------------
 @app.route("/")
@@ -323,31 +323,30 @@ def predict_manual():
     if validation_error:
         return jsonify({"error": validation_error}), 400
 
-    # 🛡️ SAFETY OVERRIDE (VERY IMPORTANT)
-    # 🛡️ DIRECT SAFETY CHECK (NO FUNCTION)
-if (4000 <= wbc <= 11000 and
-    4.0 <= rbc <= 6.0 and
-    12 <= hb <= 17 and
-    150000 <= platelets <= 450000):
+    # 🛡️ SAFETY CHECK (FIXED INDENTATION)
+    if (4000 <= wbc <= 11000 and
+        4.0 <= rbc <= 6.0 and
+        12 <= hb <= 17 and
+        150000 <= platelets <= 450000):
 
-    print("✅ NORMAL VALUES DETECTED")
-    risk = "LOW RISK"
-    prob = 0.99
+        print("✅ NORMAL VALUES DETECTED")
+        risk = "LOW RISK"
+        prob = 0.75  # ✅ FIXED PROBABILITY FOR NORMAL CASES
 
-else:
-    print("⚠️ USING ML MODEL")
+    else:
+        print("⚠️ USING ML MODEL")
 
-    pred, prob = get_prediction(wbc, rbc, hb, platelets)
+        pred, prob = get_prediction(wbc, rbc, hb, platelets)
 
-    risk_map = {
-        0: "LOW RISK",
-        1: "MEDIUM RISK",
-        2: "HIGH RISK"
-    }
+        risk_map = {
+            0: "LOW RISK",
+            1: "MEDIUM RISK",
+            2: "HIGH RISK"
+        }
 
-    risk = risk_map[pred]
+        risk = risk_map.get(pred, "UNKNOWN")
 
-    # ✅ save to DB
+    # ✅ save to DB (MOVED OUTSIDE IF/ELSE → ALWAYS SAVES)
     record_prediction(
         source="manual",
         file_name=None,
@@ -368,6 +367,7 @@ else:
     else:
         confidence = "Low Confidence"
 
+    # ✅ FINAL RETURN (INSIDE FUNCTION)
     return jsonify({
         "probability": round(prob, 3),
         "risk": risk,
@@ -379,6 +379,7 @@ else:
             else "High-risk indicators detected. Immediate evaluation recommended."
         )
     })
+    
 @app.route("/upload", methods=["POST"])
 @login_required
 def upload():
