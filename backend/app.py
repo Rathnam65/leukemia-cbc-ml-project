@@ -265,12 +265,32 @@ def recommendation(prob):
 
 # ---------------- ROUTES ----------------
 @app.route("/")
-@login_required
 def home():
     frontend_dir=os.path.abspath(os.path.join(BASE_DIR,"..","frontend"))
     return send_from_directory(frontend_dir,"index.html")
 
+@app.route("/predict", methods=["POST"])
+@login_required
+def predict_manual():
+    data = request.get_json()
 
+    wbc = float(data.get("wbc", 0))
+    rbc = float(data.get("rbc", 0))
+    hb = float(data.get("hb", 0))
+    platelets = float(data.get("platelets", 0))
+
+    prob = get_prediction(wbc, rbc, hb, platelets)
+    risk = recommendation(prob)
+
+    return jsonify({
+        "probability": prob,
+        "risk": risk,
+        "recommendation": (
+            "Values appear within normal range." if risk == "Low Risk"
+            else "Monitor patient and repeat CBC." if risk == "Medium Risk"
+            else "High-risk indicators detected. Immediate evaluation recommended."
+        )
+    })
 @app.route("/upload", methods=["POST"])
 @login_required
 def upload():
