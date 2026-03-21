@@ -7,9 +7,12 @@ import io
 import sqlite3
 import pandas as pd
 import bcrypt   # ✅ ADDED
+from flask_cors import CORS
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
+CORS(app, supports_credentials=True)
 app.config.update(
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True
@@ -208,10 +211,12 @@ def teardown_db(exception):
 # ---------------- ML + DB ----------------
 def record_prediction(source, file_name, record_id, wbc, rbc, hb, platelets, probability, risk):
     db = get_db()
+    hospital = session.get("hospital", "default")
+
     db.execute(
-        "INSERT INTO predictions (timestamp, source, file_name, record_id, wbc, rbc, hb, platelets, probability, risk) "
-        "VALUES (datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (source, file_name, record_id, wbc, rbc, hb, platelets, probability, risk),
+        "INSERT INTO predictions (hospital, timestamp, source, file_name, record_id, wbc, rbc, hb, platelets, probability, risk) "
+        "VALUES (?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (hospital, source, file_name, record_id, wbc, rbc, hb, platelets, probability, risk),
     )
     db.commit()
 
