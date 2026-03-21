@@ -447,9 +447,9 @@ def upload():
                 "probability": prob,
                 "risk": risk,
                 "recommendation": (
-                    "Values appear within normal range." if risk == "LOW RISK"
+                   "Values appear within normal range." if risk == "LOW RISK"
                     else "Monitor patient and repeat CBC." if risk == "MEDIUM RISK"
-                    else "High-risk indicators detected. Immediate evaluation recommended."
+                    else "Abnormal parameters detected. Further medical evaluation recommended."
                 )
             })
 
