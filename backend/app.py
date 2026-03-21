@@ -419,21 +419,20 @@ def upload():
 
         for _, row in df.iterrows():
             pred, prob = get_prediction(
-        row["WBC"],
-        row["RBC"],
-        row["Hb"],
-        row["Platelets"]
+                row["WBC"],
+            row["RBC"],
+            row["Hb"],
+            row["Platelets"]
     )
 
             risk_map = {
-    0: "LOW RISK",
-    1: "MEDIUM RISK",
-    2: "HIGH RISK"
-}
+        0: "LOW RISK",
+        1: "MEDIUM RISK",
+        2: "HIGH RISK"
+    }
 
             risk = risk_map[pred]
 
-    # ✅ correct DB save
             record_prediction(
         source="file",
         file_name=filename,
@@ -445,17 +444,18 @@ def upload():
         probability=prob,
         risk=risk
     )
-            results.append({
-                "probability": prob,
-                "risk": risk,
-                "recommendation": (
-                   "Values appear within normal range." if risk == "LOW RISK"
-                    else "Monitor patient and repeat CBC." if risk == "MEDIUM RISK"
-                    else "Abnormal parameters detected. Further medical evaluation recommended."
-                )
-            })
 
-    return jsonify({
+            results.append({
+        "probability": prob,
+        "risk": risk,
+        "recommendation": (
+            "Values appear within normal range." if risk == "LOW RISK"
+            else "Monitor patient and repeat CBC." if risk == "MEDIUM RISK"
+            else "Abnormal parameters detected. Further medical evaluation recommended."
+        )
+    })
+
+            return jsonify({
         "total_records_processed": len(results),
         "results": results
     })
