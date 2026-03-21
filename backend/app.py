@@ -256,45 +256,98 @@ def get_prediction(wbc, rbc, hb, platelets):
         "Platelets": [platelets]
     })
 
-    return float(model.predict_proba(df)[0][1])
+    pred = model.predict(df)[0]
+    probs = model.predict_proba(df)[0]
 
-
-def recommendation(prob):
-    if prob < 0.30:
-        return "Low Risk"
-    elif prob < 0.60:
-        return "Medium Risk"
-    else:
-        return "High Risk"
-
+    return pred, max(probs)
 
 # ---------------- ROUTES ----------------
 @app.route("/")
 def home():
     frontend_dir=os.path.abspath(os.path.join(BASE_DIR,"..","frontend"))
     return send_from_directory(frontend_dir,"index.html")
+def validate_input(wbc, rbc, hb, platelets):
+    if not (1000 <= wbc <= 200000):
+        return "Invalid WBC value"
+    if not (1 <= rbc <= 10):
+        return "Invalid RBC value"
+    if not (3 <= hb <= 20):
+        return "Invalid Hemoglobin value"
+    if not (10000 <= platelets <= 1000000):
+        return "Invalid Platelet count"
+    return None
 
+
+def get_reason(wbc, rbc, hb, platelets):
+    reasons = []
+
+    if wbc > 30000:
+        reasons.append("High WBC count (possible leukemia indicator)")
+    if hb < 8:
+        reasons.append("Low hemoglobin (possible bone marrow issue)")
+    if platelets < 100000:
+        reasons.append("Low platelets (possible blood disorder)")
+
+    return " | ".join(reasons) if reasons else "Values appear normal"
 @app.route("/predict", methods=["POST"])
 @login_required
 def predict_manual():
     data = request.get_json()
 
-    wbc = float(data.get("wbc", 0))
-    rbc = float(data.get("rbc", 0))
-    hb = float(data.get("hb", 0))
-    platelets = float(data.get("platelets", 0))
+    # ✅ try-except
+    try:
+        wbc = float(data.get("wbc", 0))
+        rbc = float(data.get("rbc", 0))
+        hb = float(data.get("hb", 0))
+        platelets = float(data.get("platelets", 0))
+    except:
+        return jsonify({"error": "Invalid input format"}), 400
 
-    prob = get_prediction(wbc, rbc, hb, platelets)
-    risk = recommendation(prob)
+    # ✅ validation
+    validation_error = validate_input(wbc, rbc, hb, platelets)
+    if validation_error:
+        return jsonify({"error": validation_error}), 400
+
+    pred, prob = get_prediction(wbc, rbc, hb, platelets)
+
+    risk_map = {
+        0: "Low Risk",
+        1: "Medium Risk",
+        2: "High Risk"
+    }
+
+    risk = risk_map[pred]
+
+    record_prediction(
+    source="manual",
+    file_name=None,
+    record_id=None,
+    wbc=wbc,
+    rbc=rbc,
+    hb=hb,
+    platelets=platelets,
+    probability=prob,
+    risk=risk
+)
+
+    # ✅ confidence
+    if prob > 0.85:
+        confidence = "High Confidence"
+    elif prob > 0.6:
+        confidence = "Moderate Confidence"
+    else:
+        confidence = "Low Confidence"
 
     return jsonify({
         "probability": prob,
         "risk": risk,
+        "confidence": confidence,
+        "reason": get_reason(wbc, rbc, hb, platelets),
         "recommendation": (
-            "Values appear within normal range." if risk == "Low Risk"
-            else "Monitor patient and repeat CBC." if risk == "Medium Risk"
-            else "High-risk indicators detected. Immediate evaluation recommended."
-        )
+    "Values appear within normal range." if risk == "Low Risk"
+    else "Monitor patient and repeat CBC." if risk == "Medium Risk"
+    else "High-risk indicators detected. Immediate evaluation recommended."
+)
     })
 @app.route("/upload", methods=["POST"])
 @login_required
@@ -311,6 +364,7 @@ def upload():
 
         if filename.endswith(".csv"):
             df = pd.read_csv(file)
+            df.columns = [c.strip().capitalize() for c in df.columns]
 
         elif filename.endswith(".pdf"):
             text = ""
@@ -333,9 +387,33 @@ def upload():
             continue
 
         for _, row in df.iterrows():
-            prob = get_prediction(row["WBC"], row["RBC"], row["Hb"], row["Platelets"])
-            risk = recommendation(prob)
+            pred, prob = get_prediction(
+        row["WBC"],
+        row["RBC"],
+        row["Hb"],
+        row["Platelets"]
+    )
 
+            risk_map = {
+        0: "Low Risk",
+        1: "Medium Risk",
+        2: "High Risk"
+    }
+
+            risk = risk_map[pred]
+
+    # ✅ correct DB save
+            record_prediction(
+        source="file",
+        file_name=filename,
+        record_id=None,
+        wbc=row["WBC"],
+        rbc=row["RBC"],
+        hb=row["Hb"],
+        platelets=row["Platelets"],
+        probability=prob,
+        risk=risk
+    )
             results.append({
                 "probability": prob,
                 "risk": risk,

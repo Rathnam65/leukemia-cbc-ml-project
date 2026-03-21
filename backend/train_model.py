@@ -15,41 +15,35 @@ from sklearn.preprocessing import StandardScaler
 
 
 def generate_synthetic_data(num_samples=5000, seed=42):
-    """Generate a synthetic CBC dataset for training when real data is limited."""
     np.random.seed(seed)
-
-    healthy_count = num_samples // 2
-    leukemia_count = num_samples - healthy_count
 
     data = []
 
-    # Healthy patients (normal ranges)
-    for _ in range(healthy_count):
+    # LOW RISK (0)
+    for _ in range(num_samples // 3):
         wbc = np.clip(np.random.normal(7500, 1500), 4500, 11000)
         rbc = np.clip(np.random.normal(4.8, 0.4), 4.0, 5.5)
         hb = np.clip(np.random.normal(14.5, 1.0), 12, 17)
         platelets = np.clip(np.random.normal(250000, 40000), 150000, 400000)
         data.append([wbc, rbc, hb, platelets, 0])
 
-    # Leukemia-like patterns (out-of-range values)
-    # Leukemia-like patterns (REALISTIC overlap)
-    for _ in range(leukemia_count):
-        wbc = np.random.normal(20000, 15000)
-        rbc = np.random.normal(3.5, 1.0)
-        hb = np.random.normal(9, 3)
-        platelets = np.random.normal(120000, 80000)
-
-        # Clip to realistic limits
-        wbc = np.clip(wbc, 5000, 150000)
-        rbc = np.clip(rbc, 1.5, 6)
-        hb = np.clip(hb, 4, 17)
-        platelets = np.clip(platelets, 20000, 400000)
-
+    # MEDIUM RISK (1)
+    for _ in range(num_samples // 3):
+        wbc = np.clip(np.random.normal(13000, 4000), 9000, 25000)
+        rbc = np.clip(np.random.normal(4.0, 0.6), 3.0, 5.0)
+        hb = np.clip(np.random.normal(10.5, 2), 8, 12)
+        platelets = np.clip(np.random.normal(140000, 50000), 80000, 200000)
         data.append([wbc, rbc, hb, platelets, 1])
 
+    # HIGH RISK (2)
+    for _ in range(num_samples // 3):
+        wbc = np.clip(np.random.normal(50000, 30000), 20000, 150000)
+        rbc = np.clip(np.random.normal(3.0, 1.0), 1.5, 4.5)
+        hb = np.clip(np.random.normal(7, 2), 4, 10)
+        platelets = np.clip(np.random.normal(80000, 40000), 20000, 150000)
+        data.append([wbc, rbc, hb, platelets, 2])
+
     return pd.DataFrame(data, columns=["WBC", "RBC", "Hb", "Platelets", "Label"])
-
-
 def load_data(data_path: Path) -> pd.DataFrame:
     """Load training data from disk or generate synthetic examples."""
     if data_path.exists():
@@ -119,7 +113,7 @@ def train_and_save_model():
             pipeline,
             param_distributions=param_dist,
             n_iter=40,
-            scoring="roc_auc",
+            scoring="roc_auc_ovr",
             n_jobs=-1,
             cv=cv,
             random_state=42,
@@ -145,11 +139,12 @@ def train_and_save_model():
         calibrated = best
 
     y_pred = calibrated.predict(X_test)
-    y_proba = calibrated.predict_proba(X_test)[:, 1]
+    y_proba = calibrated.predict_proba(X_test)
+    roc_auc = roc_auc_score(y_test, y_proba, multi_class='ovr')
 
     print("\nTest set evaluation:")
     print("Accuracy:", round(accuracy_score(y_test, y_pred), 4))
-    print("ROC AUC:", round(roc_auc_score(y_test, y_proba), 4))
+    print("ROC AUC:", round(roc_auc, 4))
     print("\nClassification report:")
     print(classification_report(y_test, y_pred, digits=4))
     print("Confusion matrix:")

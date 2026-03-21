@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS predictions (
     hb REAL,
     platelets REAL,
     probability REAL,
-    risk TEXT,
+    risk TEXT
     
 );
 """
