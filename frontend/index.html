@@ -867,16 +867,22 @@
         }
 
         function createResultHTML(result, index = null) {
-            const riskLevel = getRiskCategory(result.risk);
-            const riskClass = `${riskLevel}-risk`;
-            const probPercent = (result.probability * 100).toFixed(1);
+            const probPercent = parseFloat((result.probability * 100).toFixed(1));
+
+// 🎯 UI-based risk (your requirement)
+let riskLevel = "low";
+
+if (probPercent >= 60) riskLevel = "high";
+else if (probPercent >= 30) riskLevel = "medium";
+
+const riskClass = `${riskLevel}-risk`;
             let headerText = index !== null ? `Record ${index + 1}` : 'Assessment Result';
             
             return `
                 <div class="result-item ${riskClass}">
                     <div class="result-header">
                         <strong style="font-size: 16px;">${headerText}</strong>
-                        <span class="risk-badge">${result.risk} RISK</span>
+                        <span class="risk-badge">${riskLevel.toUpperCase()} RISK</span>
                     </div>
                     <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 14px; font-weight: 500;">
@@ -946,16 +952,21 @@ function predictManual() {
         const prob = (data.probability * 100).toFixed(1);
         const risk = data.risk;
 
-        let riskClass = "low-risk";
-        if (risk.toLowerCase().includes("medium")) riskClass = "medium-risk";
-        if (risk.toLowerCase().includes("high")) riskClass = "high-risk";
+        const score = parseFloat((data.probability * 100).toFixed(1));
+
+let riskLevel = "low";
+
+if (score >= 60) riskLevel = "high";
+else if (score >= 30) riskLevel = "medium";
+
+let riskClass = `${riskLevel}-risk`;
 
         resultDiv.className = "";
         resultDiv.innerHTML = `
             <div class="result-item ${riskClass}">
                 <div class="result-header">
                     <strong>Prediction Result</strong>
-                    <span class="risk-badge">${risk}</span>
+                    <span class="risk-badge">${riskLevel.toUpperCase()} RISK</span>
                 </div>
 
                 <div style="margin-top:10px;">
