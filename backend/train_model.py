@@ -32,11 +32,19 @@ def generate_synthetic_data(num_samples=5000, seed=42):
         data.append([wbc, rbc, hb, platelets, 0])
 
     # Leukemia-like patterns (out-of-range values)
+    # Leukemia-like patterns (REALISTIC overlap)
     for _ in range(leukemia_count):
-        wbc = np.random.uniform(30000, 150000)
-        rbc = np.random.uniform(1.5, 4.0)
-        hb = np.random.uniform(5, 10)
-        platelets = np.random.uniform(20000, 100000)
+        wbc = np.random.normal(20000, 15000)
+        rbc = np.random.normal(3.5, 1.0)
+        hb = np.random.normal(9, 3)
+        platelets = np.random.normal(120000, 80000)
+
+        # Clip to realistic limits
+        wbc = np.clip(wbc, 5000, 150000)
+        rbc = np.clip(rbc, 1.5, 6)
+        hb = np.clip(hb, 4, 17)
+        platelets = np.clip(platelets, 20000, 400000)
+
         data.append([wbc, rbc, hb, platelets, 1])
 
     return pd.DataFrame(data, columns=["WBC", "RBC", "Hb", "Platelets", "Label"])

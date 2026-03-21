@@ -22,6 +22,7 @@ os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 schema = """
 CREATE TABLE IF NOT EXISTS predictions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hospital TEXT NOT NULL,
     timestamp TEXT NOT NULL,
     source TEXT NOT NULL,
     file_name TEXT,
@@ -31,7 +32,8 @@ CREATE TABLE IF NOT EXISTS predictions (
     hb REAL,
     platelets REAL,
     probability REAL,
-    risk TEXT
+    risk TEXT,
+    
 );
 """
 

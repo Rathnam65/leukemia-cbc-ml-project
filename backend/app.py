@@ -23,7 +23,7 @@ AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "password")
 
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 model_path=os.path.join(BASE_DIR,"model","leukemia_model.pkl")
-model=joblib.load(model_path)
+model = joblib.load(model_path)
 
 UPLOAD_FOLDER=os.path.join(BASE_DIR,"uploads")
 os.makedirs(UPLOAD_FOLDER,exist_ok=True)
@@ -251,6 +251,7 @@ def get_prediction(wbc, rbc, hb, platelets):
         "Hb": [hb],
         "Platelets": [platelets]
     })
+
     return float(model.predict_proba(df)[0][1])
 
 
