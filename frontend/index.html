@@ -745,7 +745,7 @@
         <div id="history" class="tab-content">
             <div class="content-header">
                 <h2>Assessment History</h2>
-                <p>Recent predictions stored locally for this session. Auto-refresh keeps the table up-to-date.</p>
+                <p id="historyScopeText">Recent predictions for the signed-in hospital. Auto-refresh keeps the table up-to-date.</p>
             </div>
 
             <div class="card" style="max-width: 100%;">
@@ -1058,6 +1058,7 @@ function predictManual() {
 
         function loadUser() {
             const userInfo = document.getElementById("userInfo");
+            const historyScopeText = document.getElementById("historyScopeText");
             fetch("/whoami", {
     credentials: "include"
 })
@@ -1067,10 +1068,19 @@ function predictManual() {
                 })
                 .then(data => {
                     if (data && data.user) {
-                        userInfo.innerHTML = `Signed in as:<br><strong>${data.user}</strong>`;
+                        const hospital = data.hospital || "default";
+                        userInfo.innerHTML = `Signed in as:<br><strong>${data.user}</strong><br><span style="font-size:12px; color: var(--text-light);">Hospital: ${hospital}</span>`;
+                        if (historyScopeText) {
+                            historyScopeText.textContent = `Showing prediction history for hospital: ${hospital}.`;
+                        }
                     }
                 })
-                .catch(() => userInfo.innerText = "");
+                .catch(() => {
+                    userInfo.innerText = "";
+                    if (historyScopeText) {
+                        historyScopeText.textContent = "Recent predictions for the signed-in hospital.";
+                    }
+                });
         }
 
         function fetchHistory() {
