@@ -23,7 +23,13 @@ AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "password")
 
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 model_path=os.path.join(BASE_DIR,"model","leukemia_model.pkl")
-model = joblib.load(model_path)
+try:
+    print("Loading model from:", model_path)
+    model = joblib.load(model_path)
+    print("✅ MODEL LOADED SUCCESSFULLY")
+except Exception as e:
+    print("❌ MODEL LOAD ERROR:", e)
+    model = None
 
 UPLOAD_FOLDER=os.path.join(BASE_DIR,"uploads")
 os.makedirs(UPLOAD_FOLDER,exist_ok=True)
@@ -249,6 +255,9 @@ def extract_cbc_from_pdf(path):
 
 
 def get_prediction(wbc, rbc, hb, platelets):
+    if model is None:
+        raise Exception("Model not loaded")
+
     df = pd.DataFrame({
         "WBC": [wbc],
         "RBC": [rbc],
