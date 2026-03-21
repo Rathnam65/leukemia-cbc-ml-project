@@ -152,8 +152,14 @@ def confidence_from_probability(probability):
     return "Low Confidence"
 
 
-def recommendation_for_risk(risk):
+def clamp(value, lower, upper):
+    return max(lower, min(upper, value))
+
+
+def recommendation_for_assessment(risk, reasons):
     if risk == "LOW RISK":
+        if reasons and reasons != "All parameters are within normal range":
+            return "Overall low-risk pattern, but mild abnormalities are present. Consider clinical correlation and repeat CBC if needed."
         return "Values appear within normal range."
     if risk == "MEDIUM RISK":
         return "Monitor patient and repeat CBC."
@@ -232,70 +238,139 @@ def engineer_model_features(wbc, rbc, hb, platelets):
 
 
 def clinical_risk_profile(wbc, rbc, hb, platelets):
-    score = 0
+    score = 0.0
     reasons = []
 
-    if wbc > 50000:
+    severe_flags = 0
+    moderate_flags = 0
+    mild_flags = 0
+
+    if wbc >= 100000:
+        score += 5
+        severe_flags += 1
+        reasons.append("Critically elevated WBC count")
+    elif wbc >= 50000:
         score += 4
+        severe_flags += 1
         reasons.append("Severely elevated WBC count")
-    elif wbc > 20000:
-        score += 3
+    elif wbc >= 25000:
+        score += 2.5
+        moderate_flags += 1
         reasons.append("Markedly elevated WBC count")
     elif wbc > 11000:
-        score += 1.5
-        reasons.append("Elevated WBC count")
-    elif wbc < 4000:
         score += 1
+        mild_flags += 1
+        reasons.append("Elevated WBC count")
+    elif wbc < 3500:
+        score += 1
+        mild_flags += 1
         reasons.append("Low WBC count")
 
-    if hb < 8:
-        score += 3
+    if hb < 7:
+        score += 4
+        severe_flags += 1
         reasons.append("Severe anemia")
-    elif hb < 10:
-        score += 2
+    elif hb < 9:
+        score += 2.5
+        moderate_flags += 1
         reasons.append("Moderate anemia")
     elif hb < 12:
         score += 1
+        mild_flags += 1
         reasons.append("Low hemoglobin")
 
-    if rbc < 3:
-        score += 2
+    if rbc < 2.5:
+        score += 3
+        severe_flags += 1
         reasons.append("Severely low RBC count")
-    elif rbc < 4:
-        score += 1
+    elif rbc < 3.5:
+        score += 1.5
+        moderate_flags += 1
         reasons.append("Low RBC count")
+    elif rbc < 4.0:
+        score += 0.5
+        mild_flags += 1
+        reasons.append("Borderline low RBC count")
 
     if platelets < 50000:
-        score += 3
+        score += 4
+        severe_flags += 1
         reasons.append("Severe thrombocytopenia")
     elif platelets < 100000:
-        score += 2
+        score += 2.5
+        moderate_flags += 1
         reasons.append("Markedly low platelet count")
     elif platelets < 150000:
         score += 1
+        mild_flags += 1
         reasons.append("Low platelet count")
-    elif platelets > 450000:
+    elif platelets > 500000:
         score += 1
+        mild_flags += 1
         reasons.append("High platelet count")
 
-    cytopenias = int(rbc < 4.0) + int(hb < 12.0) + int(platelets < 150000)
-    if cytopenias >= 3:
+    abnormal_count = severe_flags + moderate_flags + mild_flags
+
+    if severe_flags >= 2:
         score += 2
-    elif cytopenias == 2:
+    elif severe_flags >= 1 and moderate_flags >= 1:
+        score += 1.5
+    elif moderate_flags >= 2:
         score += 1
 
-    if score >= 6:
+    high_risk = (
+        severe_flags >= 2
+        or wbc >= 70000
+        or (wbc >= 40000 and (hb < 9 or platelets < 100000 or rbc < 3.5))
+        or score >= 8
+    )
+    medium_risk = (
+        severe_flags >= 1
+        or moderate_flags >= 2
+        or (moderate_flags >= 1 and abnormal_count >= 2)
+        or score >= 2.5
+    )
+
+    if high_risk:
         risk = "HIGH RISK"
-        probability = 0.88
-        class_probs = {"LOW RISK": 0.02, "MEDIUM RISK": 0.10, "HIGH RISK": 0.88}
-    elif score >= 3:
+        probability = 0.72
+        probability += max(0.0, score - 8) * 0.025
+        probability += min(severe_flags, 3) * 0.03
+        if wbc >= 100000:
+            probability += 0.03
+        if hb < 7:
+            probability += 0.02
+        if platelets < 50000:
+            probability += 0.02
+        probability = clamp(probability, 0.72, 0.95)
+        low_prob = 0.03
+        medium_prob = round(1 - probability - low_prob, 3)
+        class_probs = {"LOW RISK": low_prob, "MEDIUM RISK": medium_prob, "HIGH RISK": probability}
+    elif medium_risk:
         risk = "MEDIUM RISK"
-        probability = 0.65
-        class_probs = {"LOW RISK": 0.15, "MEDIUM RISK": 0.65, "HIGH RISK": 0.20}
+        probability = 0.36
+        probability += max(0.0, score - 2.5) * 0.06
+        probability += min(moderate_flags, 3) * 0.03
+        probability += min(mild_flags, 3) * 0.01
+        if 11000 < wbc < 18000:
+            probability += 0.01
+        if hb < 11:
+            probability += 0.015
+        if platelets < 125000:
+            probability += 0.015
+        probability = clamp(probability, 0.36, 0.69)
+        low_prob = 0.20
+        high_prob = round(1 - low_prob - probability, 3)
+        class_probs = {"LOW RISK": low_prob, "MEDIUM RISK": probability, "HIGH RISK": high_prob}
     else:
         risk = "LOW RISK"
-        probability = 0.84
-        class_probs = {"LOW RISK": 0.84, "MEDIUM RISK": 0.13, "HIGH RISK": 0.03}
+        probability = 0.10
+        probability += min(score, 2.4) * 0.05
+        probability += min(mild_flags, 3) * 0.015
+        probability = clamp(probability, 0.10, 0.30)
+        high_prob = 0.02 if mild_flags == 0 else 0.03
+        medium_prob = round(1 - probability - high_prob, 3)
+        class_probs = {"LOW RISK": probability, "MEDIUM RISK": medium_prob, "HIGH RISK": high_prob}
 
     return {
         "risk": risk,
@@ -346,55 +421,14 @@ def build_prediction_response(wbc, rbc, hb, platelets):
     risk = heuristic["risk"]
     probability = heuristic["probability"]
     class_probabilities = heuristic["class_probabilities"]
-
-    if model is not None:
-        try:
-            pred, _model_probability, model_class_probs = get_prediction(wbc, rbc, hb, platelets)
-            ordered_risks = ("LOW RISK", "MEDIUM RISK", "HIGH RISK")
-            blended = {}
-            for risk_name in ordered_risks:
-                blended[risk_name] = round(
-                    0.45 * heuristic["class_probabilities"].get(risk_name, 0.0)
-                    + 0.55 * model_class_probs.get(risk_name, 0.0),
-                    6,
-                )
-
-            risk = max(blended, key=blended.get)
-            probability = float(blended[risk])
-            class_probabilities = blended
-
-            # Guardrail: keep severe multi-parameter abnormalities from being downgraded too far.
-            if heuristic["risk"] == "HIGH RISK" and label_to_risk(pred) == "LOW RISK":
-                risk = "HIGH RISK"
-                probability = max(probability, heuristic["probability"])
-                class_probabilities["HIGH RISK"] = max(
-                    class_probabilities.get("HIGH RISK", 0.0),
-                    heuristic["class_probabilities"]["HIGH RISK"],
-                )
-        except Exception:
-            pass
-
-    if risk == "HIGH RISK" and not has_severe_high_risk_evidence(wbc, rbc, hb, platelets):
-        risk = "MEDIUM RISK"
-        probability = max(
-            class_probabilities.get("MEDIUM RISK", 0.0),
-            heuristic["class_probabilities"].get("MEDIUM RISK", 0.0),
-            0.60,
-        )
-        class_probabilities["HIGH RISK"] = min(class_probabilities.get("HIGH RISK", 0.0), 0.49)
-        class_probabilities["MEDIUM RISK"] = max(class_probabilities.get("MEDIUM RISK", 0.0), probability)
-
-    if risk == "LOW RISK" and heuristic["risk"] == "MEDIUM RISK":
-        risk = "MEDIUM RISK"
-        probability = max(probability, heuristic["probability"], 0.55)
-        class_probabilities["MEDIUM RISK"] = max(class_probabilities.get("MEDIUM RISK", 0.0), probability)
+    reasons = get_reason(wbc, rbc, hb, platelets)
 
     return {
         "probability": round(probability, 3),
         "risk": risk,
         "confidence": confidence_from_probability(probability),
-        "reason": get_reason(wbc, rbc, hb, platelets),
-        "recommendation": recommendation_for_risk(risk),
+        "reason": reasons,
+        "recommendation": recommendation_for_assessment(risk, reasons),
         "class_probabilities": {key: round(value, 3) for key, value in class_probabilities.items()},
     }
 

@@ -868,21 +868,20 @@
 
         function createResultHTML(result, index = null) {
             const probPercent = parseFloat((result.probability * 100).toFixed(1));
+            const risk = (result.risk || "LOW RISK").toUpperCase();
 
-// 🎯 UI-based risk (your requirement)
-let riskLevel = "low";
+            let riskLevel = "low";
+            if (risk.includes("HIGH")) riskLevel = "high";
+            else if (risk.includes("MEDIUM")) riskLevel = "medium";
 
-if (probPercent >= 60) riskLevel = "high";
-else if (probPercent >= 30) riskLevel = "medium";
-
-const riskClass = `${riskLevel}-risk`;
-            let headerText = index !== null ? `Record ${index + 1}` : 'Assessment Result';
+            const riskClass = `${riskLevel}-risk`;
+            const headerText = index !== null ? `Record ${index}` : "Assessment Result";
             
             return `
                 <div class="result-item ${riskClass}">
                     <div class="result-header">
                         <strong style="font-size: 16px;">${headerText}</strong>
-                        <span class="risk-badge">${riskLevel.toUpperCase()} RISK</span>
+                        <span class="risk-badge">${risk}</span>
                     </div>
                     <div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 14px; font-weight: 500;">
