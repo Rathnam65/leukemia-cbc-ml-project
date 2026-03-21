@@ -44,6 +44,7 @@ def generate_synthetic_data(num_samples=5000, seed=42):
         data.append([wbc, rbc, hb, platelets, 2])
 
     return pd.DataFrame(data, columns=["WBC", "RBC", "Hb", "Platelets", "Label"])
+
 def load_data(data_path: Path) -> pd.DataFrame:
     """Load training data from disk or generate synthetic examples."""
     if data_path.exists():

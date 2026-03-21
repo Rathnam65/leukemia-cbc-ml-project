@@ -290,20 +290,26 @@ def validate_input(wbc, rbc, hb, platelets):
 def get_reason(wbc, rbc, hb, platelets):
     reasons = []
 
-    if wbc > 30000:
-        reasons.append("High WBC count (possible leukemia indicator)")
-    if hb < 8:
-        reasons.append("Low hemoglobin (possible bone marrow issue)")
-    if platelets < 100000:
-        reasons.append("Low platelets (possible blood disorder)")
+    if wbc > 11000:
+        reasons.append("Elevated WBC count")
+    if wbc < 4000:
+        reasons.append("Low WBC count")
 
-    return " | ".join(reasons) if reasons else "Values appear normal"
+    if hb < 12:
+        reasons.append("Low hemoglobin")
+
+    if platelets < 150000:
+        reasons.append("Low platelet count")
+
+    if platelets > 450000:
+        reasons.append("High platelet count")
+
+    return " | ".join(reasons) if reasons else "All parameters are within normal range"
 @app.route("/predict", methods=["POST"])
 @login_required
 def predict_manual():
     data = request.get_json()
 
-    # ✅ try-except
     try:
         wbc = float(data.get("wbc", 0))
         rbc = float(data.get("rbc", 0))
@@ -317,29 +323,43 @@ def predict_manual():
     if validation_error:
         return jsonify({"error": validation_error}), 400
 
-    pred, prob = get_prediction(wbc, rbc, hb, platelets)
+    # 🛡️ SAFETY OVERRIDE (VERY IMPORTANT)
+    def is_normal(wbc, rbc, hb, platelets):
+        return (
+            4000 <= wbc <= 11000 and
+            4.0 <= rbc <= 6.0 and
+            12 <= hb <= 17 and
+            150000 <= platelets <= 450000
+        )
 
-    risk_map = {
-        0: "Low Risk",
-        1: "Medium Risk",
-        2: "High Risk"
-    }
+    if is_normal(wbc, rbc, hb, platelets):
+        risk = "Low Risk"
+        prob = 0.99
+    else:
+        pred, prob = get_prediction(wbc, rbc, hb, platelets)
 
-    risk = risk_map[pred]
+        risk_map = {
+    0: "LOW RISK",
+    1: "MEDIUM RISK",
+    2: "HIGH RISK"
+}
 
+        risk = risk_map[pred]
+
+    # ✅ save to DB
     record_prediction(
-    source="manual",
-    file_name=None,
-    record_id=None,
-    wbc=wbc,
-    rbc=rbc,
-    hb=hb,
-    platelets=platelets,
-    probability=prob,
-    risk=risk
-)
+        source="manual",
+        file_name=None,
+        record_id=None,
+        wbc=wbc,
+        rbc=rbc,
+        hb=hb,
+        platelets=platelets,
+        probability=prob,
+        risk=risk
+    )
 
-    # ✅ confidence
+    # ✅ confidence label
     if prob > 0.85:
         confidence = "High Confidence"
     elif prob > 0.6:
@@ -348,15 +368,15 @@ def predict_manual():
         confidence = "Low Confidence"
 
     return jsonify({
-        "probability": prob,
+        "probability": round(prob, 3),
         "risk": risk,
         "confidence": confidence,
         "reason": get_reason(wbc, rbc, hb, platelets),
         "recommendation": (
-    "Values appear within normal range." if risk == "Low Risk"
-    else "Monitor patient and repeat CBC." if risk == "Medium Risk"
-    else "High-risk indicators detected. Immediate evaluation recommended."
-)
+            "Values appear within normal range." if risk == "LOW RISK"
+            else "Monitor patient and repeat CBC." if risk == "MEDIUM RISK"
+            else "High-risk indicators detected. Immediate evaluation recommended."
+        )
     })
 @app.route("/upload", methods=["POST"])
 @login_required
@@ -404,10 +424,10 @@ def upload():
     )
 
             risk_map = {
-        0: "Low Risk",
-        1: "Medium Risk",
-        2: "High Risk"
-    }
+    0: "LOW RISK",
+    1: "MEDIUM RISK",
+    2: "HIGH RISK"
+}
 
             risk = risk_map[pred]
 
@@ -427,8 +447,8 @@ def upload():
                 "probability": prob,
                 "risk": risk,
                 "recommendation": (
-                    "Values appear within normal range." if risk == "Low Risk"
-                    else "Monitor patient and repeat CBC." if risk == "Medium Risk"
+                    "Values appear within normal range." if risk == "LOW RISK"
+                    else "Monitor patient and repeat CBC." if risk == "MEDIUM RISK"
                     else "High-risk indicators detected. Immediate evaluation recommended."
                 )
             })
