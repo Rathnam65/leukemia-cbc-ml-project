@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
 CORS(app, supports_credentials=True)
 app.config.update(
-    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=True
 )
 # Default admin login (kept)

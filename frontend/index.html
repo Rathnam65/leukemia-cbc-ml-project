@@ -932,12 +932,13 @@ function predictManual() {
 })
     })
     .then(res => {
-        if (res.status === 401) {
-            window.location = "/login";
-            return Promise.reject();
-        }
-        return res.json();
-    })
+    if (res.status === 401) {
+        loadingDiv.style.display = "none";   // ✅ STOP loading
+        window.location = "/login";
+        throw new Error("Session expired");
+    }
+    return res.json();
+})
     .then(data => {
         loadingDiv.style.display = "none";
         resultDiv.style.display = "block";
@@ -987,12 +988,12 @@ let riskClass = `${riskLevel}-risk`;
             </div>
         `;
     })
-    .catch(() => {
-        loadingDiv.style.display = "none";
-        resultDiv.style.display = "block";
-        resultDiv.className = "error";
-        resultDiv.innerText = "Connection error. Please try again.";
-    });
+    .catch((err) => {
+    loadingDiv.style.display = "none";
+    resultDiv.style.display = "block";
+    resultDiv.className = "error";
+    resultDiv.innerText = err.message || "Connection error. Please try again.";
+});
 }
         function predictFile() {
             const fileInput = document.getElementById("fileInput");
